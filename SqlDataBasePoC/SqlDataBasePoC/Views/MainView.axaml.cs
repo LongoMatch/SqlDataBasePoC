@@ -1,8 +1,13 @@
 using System;
+using System.Diagnostics.Metrics;
+using System.Dynamic;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Microsoft.EntityFrameworkCore;
 using SqlDataBasePoC.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SqlDataBasePoC.Views;
 
@@ -11,57 +16,51 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
-        Loaded += OnMainViewLoaded;
+        Loaded += OnLoaded;
     }
 
-    private async void OnMainViewLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        try
+    }
+
+    private async void OnReadDataBase(object? sender, RoutedEventArgs e)
+    {
+        await InitializeDataAsync();
+        using (var db = new DataBaseContext())
         {
-            using (var db = new DataBaseContext())
+            foreach (var team in db.Teams.Include(t => t.Players))
             {
-                await db.Database.MigrateAsync();
-                await db.Database.EnsureCreatedAsync();
-
-                if (!db.Teams.Any())
+                System.Diagnostics.Debug.WriteLine($"Team - Id: {team.Id} Name: {team.Name} Country: {team.Country} Players total: {team.Players.Count}");
+                foreach (var player in team.Players)
                 {
-                    // Initialize Data
-                    var bcn = new Team()
-                    {
-                        Name = "FC Barcelona",
-                        Country = "Spain",
-                    };
-                    var pbcn1 = new Player()
-                    {
-                        Name = "Marc Andre Ter Stegen",
-                        Position = "GK",
-                    };
-                    bcn.Players.Add(pbcn1);
-                    await db.AddAsync(bcn);
-                    await db.SaveChangesAsync();
-
-                    var rm = new Team()
-                    {
-                        Name = "Real Madrid CF",
-                        Country = "Spain",
-                    };
-                    await db.AddAsync(rm);
-                    await db.SaveChangesAsync();
-                }
-
-                foreach (var team in db.Teams.Include(t => t.Players))
-                {
-                    System.Diagnostics.Debug.WriteLine($"Team - Id: {team.Id} Name: {team.Name} Country: {team.Country} Players total: {team.Players.Count}");
-                    foreach (var player in team.Players)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Player - Id: {player.Id} Name: {player.Name} Position: {player.Position} TeamId: {player.TeamId} Team: {player.Team.Name}");
-                    }
+                    System.Diagnostics.Debug.WriteLine($"Player - Id: {player.Id} Name: {player.Name} Position: {player.Position} TeamId: {player.TeamId} Team: {player.Team.Name}");
                 }
             }
         }
-        catch (Exception ex)
+    }
+    private async Task InitializeDataAsync()
+    {
+        using (var db = new DataBaseContext())
         {
-            // An exception is thwon if try using the data base without the initialize migration in migrations folder
+/*
+            Calling BeginTransactionAsync before executing changes in the database and CommitTransactionAsync
+            after saving the changes in the database ensures that all operations will be performed at once
+            and that if a failure occurs during execution, no changes will be applied, preventing the creation
+            of an inconsistent state in the database. This reduces performance but is safer.
+*/
+            await db.Database.BeginTransactionAsync();
+
+            var bcn = new Team() { Name = "FC Barcelona", Country = "Spain" };
+            var pbcn1 = new Player() { Name = "Marc Andre Ter Stegen", Position = "GK" };
+            bcn.Players.Add(pbcn1);
+            await db.AddAsync(bcn);
+            await db.SaveChangesAsync();
+
+            var rm = new Team() { Name = "Real Madrid CF", Country = "Spain" };
+            await db.AddAsync(rm);
+            await db.SaveChangesAsync();
+
+            await db.Database.CommitTransactionAsync();
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using SqlDataBasePoC.Models.Configurations;
 
 namespace SqlDataBasePoC.Models
 {
@@ -14,6 +14,10 @@ namespace SqlDataBasePoC.Models
         // dotnet add package Microsoft.EntityFrameworkCore.Sqlite
         // dotnet ef migrations add InitialCreate
         // dotnet ef database update
+        //
+        // Generate the pre-compiled models        
+        // dotnet ef dbcontext optimize -o CompiledModels -n SqlDataBasePoC.Models
+
 
         public DbSet<Team> Teams { get; set; }
         public DbSet<Player> Players { get; set; }
@@ -24,32 +28,30 @@ namespace SqlDataBasePoC.Models
 
         public const string APP_ROOT_DIRECTORY = "SqlDataBasePoC";
 
-        public DataBaseContext()
+        public DataBaseContext() : base()
         {
             var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), APP_HOST_DIRECTORY, APP_ROOT_DIRECTORY);
             CreateDirectory(folder);
             DbPath = Path.Join(folder, "teams.db");
+
+            SQLitePCL.Batteries_V2.Init();
+
+            // In a new installation, apply all migrations, including the initial migration that creates the database.
+            // The first time the app starts after an update, the new migrations (those that have not yet been executed) will be run.
+            // It's not necessary to call Database.EnsureCreated because Migrate will create the database when running the first migration if it is not created, and it also causes exceptions on iOS.
+            Database.Migrate();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-        => options.UseSqlite($"Data Source={DbPath}");
+            => options
+                .LogTo(LogDataBase, LogLevel.Warning | LogLevel.Error|LogLevel.Critical)
+                .UseSqlite($"Data Source={DbPath}");
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<Team>().Property(t => t.Name).IsRequired();
-            modelBuilder.Entity<Team>().Property(t => t.Country).IsRequired(false);
-
-            // This 1:N relationship is created by convention (adding the fields Players, TeamId and Team)
-            // However its also possible to define manually.
-            modelBuilder.Entity<Team>()
-                .HasMany(t => t.Players)
-                .WithOne(p => p.Team)
-                .HasForeignKey(p => p.TeamId)
-                .IsRequired();
-
-            modelBuilder.Entity<Player>().Property(p => p.Name).IsRequired();
-            modelBuilder.Entity<Player>().Property(p => p.Position).IsRequired(false);
+            modelBuilder.ApplyConfiguration(new TeamConfiguration());
+            modelBuilder.ApplyConfiguration(new PlayerConfiguration());
         }
 
         private void CreateDirectory(string path)
@@ -59,5 +61,9 @@ namespace SqlDataBasePoC.Models
                 _ = Directory.CreateDirectory(path);
             }
         }
+
+        // Use this method to send DataBase erros to diagnostic services (like AppCenter)
+        private void LogDataBase(string message)
+            => System.Diagnostics.Debug.WriteLine(message);
     }
 }

@@ -2,16 +2,66 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0-ios</TargetFramework>
-    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
-    <Nullable>enable</Nullable>
+    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>    
+    <ApplicationId>com.longoboard.mobile</ApplicationId>
+    <Nullable>enable</Nullable>    
   </PropertyGroup>
 
+   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <!--UNCOMMENT TO DEBUG ON DEVICE-->
+    <!--<RuntimeIdentifier>ios-arm64</RuntimeIdentifier>-->
+    <CodesignKey>Apple Development: LongoMatch Tech (TSAPF2ZQUS)</CodesignKey>
+    <CodesignProvision>match Development com.longoboard.mobile</CodesignProvision>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <UseInterpreter>true</UseInterpreter>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <MtouchDebug>true</MtouchDebug>
+    <MtouchLink>SdkOnly</MtouchLink>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
+    <!--COMMENT THE NEXT TWO LINES TO DEBUG ON DEVICE-->
+    <CodesignKey>Apple Distribution: Fluendo VAS S.L (92B7PDJGF4)</CodesignKey>
+    <CodesignProvision>match AppStore com.longoboard.mobile</CodesignProvision>
+    <!--UNCOMMENT TO DEBUG ON DEVICE-->
+    <!--<CodesignKey>Apple Development: LongoMatch Tech (TSAPF2ZQUS)</CodesignKey>-->
+
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchInterpreter>true</MtouchInterpreter>
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>    
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>       
+  </PropertyGroup>
+
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <CreatePackage>false</CreatePackage>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>    
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>    
+    <MtouchLink>None</MtouchLink>
+    <MtouchDebug>true</MtouchDebug>
+    <CodesignKey>Apple Development: LongoMatch Tech (TSAPF2ZQUS)</CodesignKey>
+    <CodesignProvision>match Development com.longoboard.mobile</CodesignProvision>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <CreatePackage>false</CreatePackage>
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>    
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <MtouchLink>SdkOnly</MtouchLink>    
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchExtraArgs>--linkskip System.Core</MtouchExtraArgs>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia.iOS" Version="$(AvaloniaVersion)" />
   </ItemGroup>

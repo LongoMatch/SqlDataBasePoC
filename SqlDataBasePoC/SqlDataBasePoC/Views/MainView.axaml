@@ -12,5 +12,11 @@
     <vm:MainViewModel />
   </Design.DataContext>
 
-  <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+  <StackPanel
+      HorizontalAlignment="Center"
+      VerticalAlignment="Center">
+      <Button
+          Content="Read database"
+          Click="OnReadDataBase"/>      
+  </StackPanel>
 </UserControl>
